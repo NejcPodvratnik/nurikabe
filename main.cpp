@@ -7,7 +7,7 @@
 int Region::nextId = 1;
 
 int main() {
-    std::string filename = "./input/4.txt";
+    std::string filename = "./input/1.txt";
 
     NurikabeSolver NS = NurikabeSolver(filename);
     

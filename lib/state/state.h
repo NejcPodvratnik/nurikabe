@@ -2,6 +2,8 @@
 #define STATE_H
 
 #include <vector>
+#include <queue>
+
 
 //Classes
 #include"../region/region.h"
@@ -18,6 +20,7 @@ private:
     void setTileAsIsland(Region* region, Tile* tile);
     bool checkIfNeighboursIslands(Tile* tile);
     bool checkIfUnreachable(Tile* tile);
+    int getMinDistance(Tile* startTile, Tile* endTile);
 
     void fullIslandsExist();
     void canExpandOnlyOneWay();

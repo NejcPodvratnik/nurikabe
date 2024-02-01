@@ -135,7 +135,6 @@ bool State::checkIfNeighboursIslands(Tile* tile)
 
 bool State::checkIfUnreachable(Tile *tile)
 {
-    std::vector<Tile*> candidateTiles;
     for (int i = 0; i < regions.size(); i++)
     {
         if (regions[i]->getType() == Type::ISLAND)
@@ -144,18 +143,55 @@ bool State::checkIfUnreachable(Tile *tile)
             for (auto startTile : regions[i] -> getAdjacentTiles(grid))
             {
                 int L1 = abs(startTile -> getX() - tile -> getX()) + abs(startTile -> getY() - tile -> getY());
-                if (L1 <= tilesLeft - 1)
-                    candidateTiles.push_back(startTile);
+                if (L1 <= tilesLeft - 1 && getMinDistance(startTile, tile) <= tilesLeft - 1)
+                    return false;
+            }
+        }
+    }
+    return true;
+}
+
+struct Point {
+    int y, x, dist;
+};
+
+int State::getMinDistance(Tile *startTile, Tile *endTile)
+{
+    int y1 = startTile -> getY();
+    int x1 = startTile -> getX();
+
+    int y2 = endTile -> getY();
+    int x2 = endTile -> getX();
+
+    std::vector<std::vector<bool>> visited(grid.size(), std::vector<bool>(grid[0].size(), false));
+    std::vector<std::vector<int>> directions = {{-1, 0}, {0, -1}, {0, 1}, {1, 0}};
+    std::queue<Point> q;
+    q.push({y1, x1, 0}); // MOGOČE 1
+    visited[y1][x1] = true;
+
+    while (!q.empty()) {
+        Point current = q.front();
+        q.pop();
+
+        if (current.y == y2 && current.x == x2) {
+            return current.dist; // Reached the destination
+        }
+
+        for (const auto& dir : directions) {
+            int x3 = current.x + dir[0];
+            int y3 = current.y + dir[1];
+
+            if (visited[y3][x3] == false && grid[y3][x3] -> getType() == Type::UNKNOWN && 
+                grid[y3 - 1][x3]->getType() != Type::ISLAND && grid[y3 + 1][x3]->getType() != Type::ISLAND &&
+                grid[y3][x3 - 1]->getType() != Type::ISLAND && grid[y3][x3 - 1]->getType() != Type::ISLAND) 
+            {
+                visited[y3][x3] = true;
+                q.push({y3, x3, current.dist + 1});
             }
         }
     }
 
-    for (auto candidateTile : candidateTiles)
-    {
-        
-    }
-
-    return true;
+    return INT32_MAX; // No valid path found
 }
 
 void State::fullIslandsExist()
