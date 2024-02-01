@@ -16,6 +16,8 @@ private:
 
     void setTileAsSea(Tile* tile);
     void setTileAsIsland(Region* region, Tile* tile);
+    bool checkIfNeighboursIslands(Tile* tile);
+    bool checkIfUnreachable(Tile* tile);
 
     void fullIslandsExist();
     void canExpandOnlyOneWay();

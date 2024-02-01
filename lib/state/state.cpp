@@ -54,14 +54,14 @@ void State::solve()
     fullIslandsExist();
     canExpandOnlyOneWay();
     islandsThatAreMissingOnlyOneCell();
-    //unreachableNodesExist();
+    unreachableNodesExist();
 }
 
 void State::setTileAsSea(Tile * tile)
 {
     tile -> setType(Type::SEA);
     
-    std::vector<Tile*> tiles = tile->getSeaNeighbour(grid);
+    std::vector<Tile*> tiles = tile->getSeaNeighbours(grid);
     if (tiles.size() == 0)
     {
         tile -> setRegion(new Region(0, Type::SEA, tile));
@@ -102,6 +102,60 @@ void State::setTileAsIsland(Region* region, Tile* tile)
     tile -> setRegion(region);
     region -> addTileToRegion(tile);
 
+}
+
+bool State::checkIfNeighboursIslands(Tile* tile)
+{
+    int y = tile->getY();
+    int x = tile->getX();
+    int id = -1;
+
+    if (grid[y - 1][x]->getType() == Type::ISLAND)
+        id = grid[y - 1][x] -> getRegion() -> getID();
+    if (grid[y + 1][x]->getType() == Type::ISLAND)
+    {
+        if (id != -1 && id != grid[y + 1][x] -> getRegion() -> getID())
+            return true;
+        id = grid[y + 1][x] -> getRegion() -> getID();;
+    }
+    if (grid[y][x - 1]->getType() == Type::ISLAND)
+    {
+        if (id != -1 && id != grid[y][x - 1] -> getRegion() -> getID())
+            return true;
+        id = grid[y][x - 1] -> getRegion() -> getID();;
+    }  
+    if (grid[y][x + 1]->getType() == Type::ISLAND)
+    {
+        if (id != -1 && id != grid[y][x + 1] -> getRegion() -> getID())
+            return true;
+        id = grid[y][x + 1] -> getRegion() -> getID();;
+    }     
+    return false;
+}
+
+bool State::checkIfUnreachable(Tile *tile)
+{
+    std::vector<Tile*> candidateTiles;
+    for (int i = 0; i < regions.size(); i++)
+    {
+        if (regions[i]->getType() == Type::ISLAND)
+        {
+            int tilesLeft = regions[i] -> getMaxSize() - regions[i] -> getCurrentSize();
+            for (auto startTile : regions[i] -> getAdjacentTiles(grid))
+            {
+                int L1 = abs(startTile -> getX() - tile -> getX()) + abs(startTile -> getY() - tile -> getY());
+                if (L1 <= tilesLeft - 1)
+                    candidateTiles.push_back(startTile);
+            }
+        }
+    }
+
+    for (auto candidateTile : candidateTiles)
+    {
+        
+    }
+
+    return true;
 }
 
 void State::fullIslandsExist()
@@ -158,7 +212,18 @@ void State::unreachableNodesExist()
     {
         for (int x = 1; x < grid[0].size() - 1; x++)
         {
-            true;
+            if (grid[y][x] -> getType() == Type::UNKNOWN)
+            {
+                //Če je obkoljeno s morjem
+                if (grid[y - 1][x]->getType() == Type::SEA && grid[y + 1][x]->getType() == Type::SEA && 
+                    grid[y][x - 1]->getType() == Type::SEA && grid[y][x + 1]->getType() == Type::SEA)
+                    setTileAsSea(grid[y][x]);
+                // Če je meja med dvema različnima otokoma
+                else if (checkIfNeighboursIslands(grid[y][x]))
+                    setTileAsSea(grid[y][x]);
+                else if (checkIfUnreachable(grid[y][x]))
+                    setTileAsSea(grid[y][x]);
+            }
         }
     }
 }

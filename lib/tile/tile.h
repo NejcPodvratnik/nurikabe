@@ -15,6 +15,8 @@ private:
     Type type;
     Region* region;
 
+    bool isDuplicate(std::vector<Tile*> seaTiles, int _y, int _x);
+
 
 public:
     Tile() : x(0), y(0), type(Type::UNKNOWN), region(nullptr) {}
@@ -32,8 +34,7 @@ public:
     void setRegion(Region* _region);
 
     // Methods
-    std::vector<Tile*> getSeaNeighbour(std::vector<std::vector<Tile*>> grid);
-    
+    std::vector<Tile*> getSeaNeighbours(std::vector<std::vector<Tile*>> grid);    
 };
 
 #endif

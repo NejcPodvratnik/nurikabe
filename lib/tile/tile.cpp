@@ -36,38 +36,25 @@ void Tile::setRegion(Region* _region)
     region = _region;
 }
 
-// OPOZORILO: Ta funkcija deluje narobe ker nena pravilno odstrani duplikate
-std::vector<Tile*> Tile::getSeaNeighbour(std::vector<std::vector<Tile *>> grid)
+bool Tile::isDuplicate(std::vector<Tile *> seaTiles, int _y, int _x)
 {
-    std::vector<Tile*> seaTiles;
-    if (grid[y - 1][x] -> getType() == Type::SEA)
-    {
-        for (auto seaTile : seaTiles)
-            if (seaTile->getX() == x && seaTile->getY() == y - 1)
-                continue;
-        seaTiles.push_back(grid[y - 1][x]);
-    }
-    if (grid[y + 1][x] -> getType() == Type::SEA)
-    {
-        for (auto seaTile : seaTiles)
-            if (seaTile->getX() == x && seaTile->getY() == y + 1)
-                continue;
-        seaTiles.push_back(grid[y + 1][x]);
-    }
-    if (grid[y][x - 1] -> getType() == Type::SEA)
-    {
-        for (auto seaTile : seaTiles)
-            if (seaTile->getX() == x - 1 && seaTile->getY() == y)
-                continue;
-        seaTiles.push_back(grid[y][x - 1]);
-    }
-    if (grid[y][x + 1] -> getType() == Type::SEA)
-    {
-        for (auto seaTile : seaTiles)
-            if (seaTile->getX() == x + 1 && seaTile->getY() == y)
-                continue;
-        seaTiles.push_back(grid[y][x + 1]);
-    }
-    return seaTiles;
+    for (auto seaTile : seaTiles)
+        if (seaTile->getX() == _x && seaTile->getY() == _y)
+            return true;
+    return false;
 }
 
+std::vector<Tile*> Tile::getSeaNeighbours(std::vector<std::vector<Tile *>> grid)
+{
+    std::vector<Tile*> seaTiles;
+    
+    if (grid[y - 1][x] -> getType() == Type::SEA && !isDuplicate(seaTiles, y - 1, x))
+        seaTiles.push_back(grid[y - 1][x]);
+    if (grid[y + 1][x] -> getType() == Type::SEA && !isDuplicate(seaTiles, y + 1, x))
+        seaTiles.push_back(grid[y + 1][x]);
+    if (grid[y][x - 1] -> getType() == Type::SEA && !isDuplicate(seaTiles, y, x - 1))
+        seaTiles.push_back(grid[y][x - 1]);
+    if (grid[y][x + 1] -> getType() == Type::SEA && !isDuplicate(seaTiles, y, x + 1))
+        seaTiles.push_back(grid[y][x + 1]);
+    return seaTiles;
+}

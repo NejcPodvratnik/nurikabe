@@ -31,42 +31,32 @@ void Region::addTileToRegion(Tile *tile)
     currentSize++;
 }
 
+bool Region::isDuplicate(std::vector<Tile*> adjacentTiles, int _y, int _x)
+{
+    for (auto adjacentTile : adjacentTiles)
+        if (adjacentTile->getX() == _x && adjacentTile->getY() == _y)
+            return true;
+    return false;
+}
 
-// OPOZORILO: Ta funkcija deluje narobe ker nena pravilno odstrani duplikate
 std::vector<Tile*> Region::getAdjacentTiles(std::vector<std::vector<Tile*>> grid)
 {
     std::vector<Tile*> adjacentTiles;
 
     for (auto tile : tiles)
     {
-        if (grid[tile->getY() - 1][tile->getX()] -> getType() == Type::UNKNOWN)
-        {
-            for (auto adjacentTile : adjacentTiles)
-                if (adjacentTile->getX() == tile->getX() && adjacentTile->getY() == tile->getY() - 1)
-                    continue;
-            adjacentTiles.push_back(grid[tile->getY() - 1][tile->getX()]);
-        }
-        if (grid[tile->getY() + 1][tile->getX()] -> getType() == Type::UNKNOWN)
-        {
-            for (auto adjacentTile : adjacentTiles)
-                if (adjacentTile->getX() == tile->getX() && adjacentTile->getY() == tile->getY() + 1)
-                    continue;
-            adjacentTiles.push_back(grid[tile->getY() + 1][tile->getX()]);
-        }
-        if (grid[tile->getY()][tile->getX() - 1] -> getType() == Type::UNKNOWN)
-        {
-            for (auto adjacentTile : adjacentTiles)
-                if (adjacentTile->getX() == tile->getX() - 1 && adjacentTile->getY() == tile->getY())
-                    continue;
-            adjacentTiles.push_back(grid[tile->getY()][tile->getX() - 1]);
-        }
-        if (grid[tile->getY()][tile->getX() + 1] -> getType() == Type::UNKNOWN)
-        {
-            for (auto adjacentTile : adjacentTiles)
-                if (adjacentTile->getX() == tile->getX() + 1 && adjacentTile->getY() == tile->getY())
-                    continue;
-            adjacentTiles.push_back(grid[tile->getY()][tile->getX() + 1]);
-        }
+        int _y = tile->getY();
+        int _x = tile->getX();
+
+        if (grid[_y - 1][_x] -> getType() == Type::UNKNOWN && !isDuplicate(adjacentTiles, _y - 1, _x))
+            adjacentTiles.push_back(grid[_y - 1][_x]);
+        if (grid[_y + 1][_x] -> getType() == Type::UNKNOWN && !isDuplicate(adjacentTiles, _y + 1, _x))
+            adjacentTiles.push_back(grid[_y + 1][_x]);
+        if (grid[_y][_x - 1] -> getType() == Type::UNKNOWN && !isDuplicate(adjacentTiles, _y, _x - 1))
+            adjacentTiles.push_back(grid[_y][_x - 1]);
+        if (grid[_y][_x + 1] -> getType() == Type::UNKNOWN && !isDuplicate(adjacentTiles, _y, _x + 1))
+            adjacentTiles.push_back(grid[_y][_x + 1]);
+
     }
     return adjacentTiles;
 }

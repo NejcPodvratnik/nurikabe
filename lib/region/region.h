@@ -18,6 +18,8 @@ private:
     Type type;
     std::vector<Tile*> tiles;
 
+    bool isDuplicate(std::vector<Tile*> adjacentTiles, int _y, int _x);
+
 
 public:
     Region(int _maxSize, Type _type, Tile* tile) : id(nextId++), currentSize(1), maxSize(_maxSize), type(_type) {
