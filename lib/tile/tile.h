@@ -34,7 +34,7 @@ public:
     void setRegion(Region* _region);
 
     // Methods
-    std::vector<Tile*> getSeaNeighbours(std::vector<std::vector<Tile*>> grid);    
+    std::vector<Tile*> getNeighboursWithType(std::vector<std::vector<Tile*>> grid, Type type);    
 };
 
 #endif

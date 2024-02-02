@@ -29,8 +29,9 @@ public:
     // Methods
     bool checkIfPool();
     bool checkIfNoUnknowns();
-    bool checkIf2Sea();
-    bool checkIf3Sea();
+    bool checkIf2SeaDanger();
+    bool checkIf3SeaDanger();
+    std::vector<Tile*> getUnknowns();
 };
 
 #endif

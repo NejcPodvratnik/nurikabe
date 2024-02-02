@@ -26,6 +26,8 @@ void State::print()
                 std::cout << "U ";
             else if (tile -> getType() == Type::SEA)
                 std::cout << "0 ";
+            else if (tile -> getType() == Type::UNCONNECTED_ISLAND)
+                std::cout << "I ";
             else if (tile -> getType() == Type::BORDER)
                 std::cout << "B ";
             else
@@ -50,18 +52,23 @@ void State::print()
 
 void State::solve()
 {
-    //TODO: CHECK IF SOLVED AND CHECK IF BOARD IS CORRECT (NO POOLS ETC.)
-    fullIslandsExist();
-    canExpandOnlyOneWay();
-    islandsThatAreMissingOnlyOneCell();
-    unreachableNodesExist();
+    bool change;
+    do 
+    {
+        change = false;
+        change |= fullIslandsExist();
+        change |= canExpandOnlyOneWay();
+        change |= islandsThatAreMissingOnlyOneCell();
+        change |= unreachableNodesExist();
+        change |= poolDangerExist();
+    } while(change);
 }
 
-void State::setTileAsSea(Tile * tile)
+bool State::setTileAsSea(Tile * tile)
 {
     tile -> setType(Type::SEA);
     
-    std::vector<Tile*> tiles = tile->getSeaNeighbours(grid);
+    std::vector<Tile*> tiles = tile->getNeighboursWithType(grid, Type::SEA);
     if (tiles.size() == 0)
     {
         tile -> setRegion(new Region(0, Type::SEA, tile));
@@ -93,15 +100,80 @@ void State::setTileAsSea(Tile * tile)
             }), regions.end());
         }
     }
+    return true;
 }
 
-//TODO: NAREDI ŠE ZA "NEPRIPRADAJOČE" OTOKE
-void State::setTileAsIsland(Region* region, Tile* tile)
+bool State::setTileAsIsland(Region* region, Tile* tile)
 {
     tile -> setType(Type::ISLAND);
     tile -> setRegion(region);
     region -> addTileToRegion(tile);
+    return true;
 
+}
+
+bool State::setTileAsUnconnectedIsland(Tile *tile)
+{
+    tile -> setType(Type::UNCONNECTED_ISLAND);
+    
+    std::vector<Tile*> tiles = tile->getNeighboursWithType(grid, Type::UNCONNECTED_ISLAND);
+    std::vector<Tile*> island = tile->getNeighboursWithType(grid, Type::ISLAND);
+
+    if (tiles.size() == 0 && island.size() >= 1)
+        setTileAsIsland(island[0]->getRegion(), tile);
+    else if (tiles.size() > 0 && island.size() >= 1)
+    {
+        setTileAsIsland(island[0]->getRegion(), tile);
+        for (int i = 0; i < tiles.size(); i++)
+        {
+            Region* reg =  tiles[i] -> getRegion();
+            for (auto regionTile : reg -> getTiles())
+            {
+                island[0] -> getRegion() -> addTileToRegion(regionTile);
+                regionTile -> setType(Type::ISLAND);
+                regionTile -> setRegion(island[0] -> getRegion());
+            }
+            int deleteID = reg -> getID();
+            regions.erase(std::remove_if(regions.begin(), regions.end(), [deleteID](Region* pReg) {
+                bool isDeleted = pReg->getID() == deleteID;
+                if (isDeleted)
+                    delete pReg;
+                return isDeleted;
+            }), regions.end());
+        }
+    }
+    else if (tiles.size() == 0 && island.size() == 0)
+    {
+        tile -> setRegion(new Region(0, Type::UNCONNECTED_ISLAND, tile));
+        regions.push_back(tile -> getRegion());
+    }
+    else if (tiles.size() == 1 && island.size() == 0)
+    {
+        tile -> setRegion(tiles[0] -> getRegion());
+        tile -> getRegion() -> addTileToRegion(tile);
+    }
+    else if (tiles.size() > 1 && island.size() == 0)
+    {
+        tile -> setRegion(tiles[0] -> getRegion());
+        tile -> getRegion() -> addTileToRegion(tile);
+        for (int i = 1; i < tiles.size(); i++)
+        {
+            Region* reg =  tiles[i] -> getRegion();
+            for (auto regionTile : reg -> getTiles())
+            {
+                tiles[0] -> getRegion() -> addTileToRegion(regionTile);
+                regionTile->setRegion(tiles[0] -> getRegion());
+            }
+            int deleteID = reg -> getID();
+            regions.erase(std::remove_if(regions.begin(), regions.end(), [deleteID](Region* pReg) {
+                bool isDeleted = pReg->getID() == deleteID;
+                if (isDeleted)
+                    delete pReg;
+                return isDeleted;
+            }), regions.end());
+        }
+    }
+    return true;
 }
 
 bool State::checkIfNeighboursIslands(Tile* tile)
@@ -133,7 +205,7 @@ bool State::checkIfNeighboursIslands(Tile* tile)
     return false;
 }
 
-bool State::checkIfUnreachable(Tile *tile)
+bool State::checkIfUnreachable(Tile *tile, int blockY, int blockX)
 {
     for (int i = 0; i < regions.size(); i++)
     {
@@ -143,7 +215,7 @@ bool State::checkIfUnreachable(Tile *tile)
             for (auto startTile : regions[i] -> getAdjacentTiles(grid))
             {
                 int L1 = abs(startTile -> getX() - tile -> getX()) + abs(startTile -> getY() - tile -> getY());
-                if (L1 <= tilesLeft - 1 && getMinDistance(startTile, tile) <= tilesLeft - 1)
+                if (L1 <= tilesLeft - 1 && getMinDistance(startTile, tile, blockY, blockX) <= tilesLeft - 1)
                     return false;
             }
         }
@@ -155,7 +227,8 @@ struct Point {
     int y, x, dist;
 };
 
-int State::getMinDistance(Tile *startTile, Tile *endTile)
+//POMEMBNO DOPOLNI: OMOGOČI DA JE DISTANCE OMEJEN NA MAXSIZE - CURRENZSIZE - 1
+int State::getMinDistance(Tile *startTile, Tile *endTile, int blockY, int blockX)
 {
     int y1 = startTile -> getY();
     int x1 = startTile -> getX();
@@ -163,11 +236,17 @@ int State::getMinDistance(Tile *startTile, Tile *endTile)
     int y2 = endTile -> getY();
     int x2 = endTile -> getX();
 
+    if (blockY == y1 && blockX == x1)
+        return INT32_MAX;
+
     std::vector<std::vector<bool>> visited(grid.size(), std::vector<bool>(grid[0].size(), false));
     std::vector<std::vector<int>> directions = {{-1, 0}, {0, -1}, {0, 1}, {1, 0}};
     std::queue<Point> q;
     q.push({y1, x1, 0}); // MOGOČE 1
     visited[y1][x1] = true;
+
+    if (blockY != -1 && blockX != -1)
+        visited[blockY][blockX] = true;
 
     while (!q.empty()) {
         Point current = q.front();
@@ -181,7 +260,7 @@ int State::getMinDistance(Tile *startTile, Tile *endTile)
             int x3 = current.x + dir[0];
             int y3 = current.y + dir[1];
 
-            if (visited[y3][x3] == false && grid[y3][x3] -> getType() == Type::UNKNOWN && 
+            if (visited[y3][x3] == false && (grid[y3][x3] -> getType() == Type::UNKNOWN || grid[y3][x3] -> getType() == Type::UNCONNECTED_ISLAND) && 
                 grid[y3 - 1][x3]->getType() != Type::ISLAND && grid[y3 + 1][x3]->getType() != Type::ISLAND &&
                 grid[y3][x3 - 1]->getType() != Type::ISLAND && grid[y3][x3 - 1]->getType() != Type::ISLAND) 
             {
@@ -194,30 +273,35 @@ int State::getMinDistance(Tile *startTile, Tile *endTile)
     return INT32_MAX; // No valid path found
 }
 
-void State::fullIslandsExist()
+bool State::fullIslandsExist()
 {
+    bool change = false;
     int size = regions.size();
     for (int i = 0; i  < size; i++)
         if (regions[i] -> getType() == Type::ISLAND && regions[i] -> getCurrentSize() == regions[i] -> getMaxSize())
             for (auto tile : regions[i] -> getAdjacentTiles(grid))
-                setTileAsSea(tile);
+                change = setTileAsSea(tile);
+    return change;
 }
 
-void State::canExpandOnlyOneWay()
+bool State::canExpandOnlyOneWay()
 {
+    bool change = false;
     for (auto region : regions)
     {
         std::vector<Tile*> adjacentTiles = region -> getAdjacentTiles(grid);
-        if (adjacentTiles.size() == 1 && region->getType() == Type::ISLAND)
-            setTileAsIsland(region, adjacentTiles[0]);
+        if (adjacentTiles.size() == 1 && (region->getType() == Type::ISLAND || region->getType() == Type::UNCONNECTED_ISLAND))
+            change = setTileAsUnconnectedIsland(adjacentTiles[0]);
         if (adjacentTiles.size() == 1 && region->getType() == Type::SEA)
-            setTileAsSea(adjacentTiles[0]);
+            change = setTileAsSea(adjacentTiles[0]);
 
     }
+    return change;
 }
 
-void State::islandsThatAreMissingOnlyOneCell()
+bool State::islandsThatAreMissingOnlyOneCell()
 {
+    bool change = false;
     for (auto region : regions)
     {
         if (region -> getType() == Type::ISLAND && region -> getCurrentSize() + 1 == region -> getMaxSize())
@@ -233,17 +317,19 @@ void State::islandsThatAreMissingOnlyOneCell()
                     (tile1 -> getX() + 1 == tile2 -> getX() && tile1 -> getY() - 1 == tile2 -> getY()))
                 {
                     if (grid[tile1->getY()][tile2->getX()]->getType() == Type::UNKNOWN)
-                        setTileAsSea(grid[tile1->getY()][tile2->getX()]);
+                        change = setTileAsSea(grid[tile1->getY()][tile2->getX()]);
                     else if (grid[tile2->getY()][tile1->getX()]->getType() == Type::UNKNOWN)
-                        setTileAsSea(grid[tile2->getY()][tile1->getX()]);
+                        change = setTileAsSea(grid[tile2->getY()][tile1->getX()]);
                 }
             }
         }
     }
+    return change;
 }
 
-void State::unreachableNodesExist()
+bool State::unreachableNodesExist()
 {
+    bool change = false;
     for (int y = 1; y < grid.size() - 1; y++)
     {
         for (int x = 1; x < grid[0].size() - 1; x++)
@@ -253,13 +339,45 @@ void State::unreachableNodesExist()
                 //Če je obkoljeno s morjem
                 if (grid[y - 1][x]->getType() == Type::SEA && grid[y + 1][x]->getType() == Type::SEA && 
                     grid[y][x - 1]->getType() == Type::SEA && grid[y][x + 1]->getType() == Type::SEA)
-                    setTileAsSea(grid[y][x]);
+                    change = setTileAsSea(grid[y][x]);
                 // Če je meja med dvema različnima otokoma
                 else if (checkIfNeighboursIslands(grid[y][x]))
-                    setTileAsSea(grid[y][x]);
+                    change = setTileAsSea(grid[y][x]);
                 else if (checkIfUnreachable(grid[y][x]))
-                    setTileAsSea(grid[y][x]);
+                    change = setTileAsSea(grid[y][x]);
             }
         }
     }
+    return change;
+}
+
+bool State::poolDangerExist()
+{
+    bool change = false;
+    for (auto potentialPool : potentialPools)
+    {
+        if (potentialPool.checkIf3SeaDanger())
+        {
+            Tile* unknownTile = potentialPool.getUnknowns()[0];
+            change = setTileAsUnconnectedIsland(unknownTile);
+        }
+        else if (potentialPool.checkIf2SeaDanger())
+        {
+            std::vector<Tile*> tiles = potentialPool.getUnknowns();
+            Tile* tile1 = tiles[0];
+            Tile* tile2 = tiles[1];
+
+            if (checkIfUnreachable(tile1, tile2 -> getY(), tile2 -> getX()))
+            {
+                change = setTileAsUnconnectedIsland(tile2);
+                //change = setTileAsSea(tile1);
+            }
+            else if (checkIfUnreachable(tile2, tile1 -> getY(), tile1 -> getX()))
+            {
+                change = setTileAsUnconnectedIsland(tile1);
+                //change = setTileAsSea(tile2);
+            }
+        }
+    }
+    return change;
 }

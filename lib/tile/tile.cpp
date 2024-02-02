@@ -44,17 +44,16 @@ bool Tile::isDuplicate(std::vector<Tile *> seaTiles, int _y, int _x)
     return false;
 }
 
-std::vector<Tile*> Tile::getSeaNeighbours(std::vector<std::vector<Tile *>> grid)
+std::vector<Tile*> Tile::getNeighboursWithType(std::vector<std::vector<Tile *>> grid, Type type)
 {
-    std::vector<Tile*> seaTiles;
-    
-    if (grid[y - 1][x] -> getType() == Type::SEA && !isDuplicate(seaTiles, y - 1, x))
-        seaTiles.push_back(grid[y - 1][x]);
-    if (grid[y + 1][x] -> getType() == Type::SEA && !isDuplicate(seaTiles, y + 1, x))
-        seaTiles.push_back(grid[y + 1][x]);
-    if (grid[y][x - 1] -> getType() == Type::SEA && !isDuplicate(seaTiles, y, x - 1))
-        seaTiles.push_back(grid[y][x - 1]);
-    if (grid[y][x + 1] -> getType() == Type::SEA && !isDuplicate(seaTiles, y, x + 1))
-        seaTiles.push_back(grid[y][x + 1]);
-    return seaTiles;
+    std::vector<Tile*> tiles;
+    if (grid[y - 1][x] -> getType() == type && !isDuplicate(tiles, y - 1, x))
+        tiles.push_back(grid[y - 1][x]);
+    if (grid[y + 1][x] -> getType() == type && !isDuplicate(tiles, y + 1, x))
+        tiles.push_back(grid[y + 1][x]);
+    if (grid[y][x - 1] -> getType() == type && !isDuplicate(tiles, y, x - 1))
+        tiles.push_back(grid[y][x - 1]);
+    if (grid[y][x + 1] -> getType() == type && !isDuplicate(tiles, y, x + 1))
+        tiles.push_back(grid[y][x + 1]);
+    return tiles;
 }

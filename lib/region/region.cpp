@@ -63,7 +63,7 @@ std::vector<Tile*> Region::getAdjacentTiles(std::vector<std::vector<Tile*>> grid
 
 void Region::print(std::vector<std::vector<Tile*>> grid)
 {
-    std::string typeS = type == Type::SEA ? "Sea" : "Island";
+    std::string typeS = type == Type::SEA ? "Sea" : (type == Type::ISLAND) ? "Island" : "Unconnected Island";
     std::cout << typeS << " " << id << " Size: " << currentSize << "/" << maxSize;
     std::cout << " Tiles: ";
     for (auto tile : tiles)

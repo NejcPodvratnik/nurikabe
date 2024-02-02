@@ -16,16 +16,18 @@ private:
     std::vector<Region*> regions;
     std::vector<PotentialPool> potentialPools;
 
-    void setTileAsSea(Tile* tile);
-    void setTileAsIsland(Region* region, Tile* tile);
+    bool setTileAsSea(Tile* tile);
+    bool setTileAsIsland(Region* region, Tile* tile);
+    bool setTileAsUnconnectedIsland(Tile* tile);
     bool checkIfNeighboursIslands(Tile* tile);
-    bool checkIfUnreachable(Tile* tile);
-    int getMinDistance(Tile* startTile, Tile* endTile);
+    bool checkIfUnreachable(Tile* tile, int blockY = -1, int blockX = -1);
+    int getMinDistance(Tile* startTile, Tile* endTile, int blockY = -1, int blockX = -1);
 
-    void fullIslandsExist();
-    void canExpandOnlyOneWay();
-    void islandsThatAreMissingOnlyOneCell();
-    void unreachableNodesExist();
+    bool fullIslandsExist();
+    bool canExpandOnlyOneWay();
+    bool islandsThatAreMissingOnlyOneCell();
+    bool unreachableNodesExist();
+    bool poolDangerExist();
 
 public:
     State(std::vector<std::vector<Tile*>> _grid, std::vector<Region*> _regions, std::vector<PotentialPool> _potentialPools) : grid(_grid), regions(_regions), potentialPools(_potentialPools) {};

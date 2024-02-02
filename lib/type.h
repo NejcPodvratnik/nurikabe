@@ -4,6 +4,7 @@
 enum class Type {
     SEA,
     ISLAND,
+    UNCONNECTED_ISLAND,
     BORDER,
     UNKNOWN
 };
