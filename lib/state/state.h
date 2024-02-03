@@ -16,9 +16,7 @@ private:
     std::vector<Region*> regions;
     std::vector<PotentialPool> potentialPools;
 
-    bool setTileAsSea(Tile* tile);
     bool setTileAsIsland(Region* region, Tile* tile);
-    bool setTileAsUnconnectedIsland(Tile* tile);
     bool checkIfNeighboursIslands(Tile* tile);
     bool checkIfUnreachable(Tile* tile, int blockY = -1, int blockX = -1);
     int getMinDistance(Tile* startTile, Tile* endTile, int blockY = -1, int blockX = -1);
@@ -28,6 +26,8 @@ private:
     bool islandsThatAreMissingOnlyOneCell();
     bool unreachableNodesExist();
     bool poolDangerExist();
+    bool checkifCorrectlySolved();
+    bool checkifErrors();
 
 public:
     State(std::vector<std::vector<Tile*>> _grid, std::vector<Region*> _regions, std::vector<PotentialPool> _potentialPools) : grid(_grid), regions(_regions), potentialPools(_potentialPools) {};
@@ -40,6 +40,8 @@ public:
     // Methods
     void print();
     void solve();
+    bool setTileAsSea(Tile* tile);
+    bool setTileAsUnconnectedIsland(Tile* tile);
 };
 
 #endif

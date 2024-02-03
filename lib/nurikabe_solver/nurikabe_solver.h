@@ -16,6 +16,7 @@ private:
     std::queue<State> states;
 
     void getDataFromFile(std::vector<std::vector<int>> &data);
+    bool isDuplicate(std::vector<Tile*> guessTiles, int _y, int _x);
 
 public:
     NurikabeSolver(std::string _filename) : filename(_filename) {}
@@ -25,7 +26,7 @@ public:
     // Methods
     void init();
     
-    //void solve();
+    void solve();
     //void printSolution();
 };
 

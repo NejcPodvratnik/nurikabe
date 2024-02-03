@@ -55,6 +55,10 @@ void State::solve()
     bool change;
     do 
     {
+        if (checkifCorrectlySolved())
+            std::cout << "Pravilno reseno." << std::endl;
+        else if (checkifErrors())
+            std::cout << "Napake najdene." << std::endl;
         change = false;
         change |= fullIslandsExist();
         change |= canExpandOnlyOneWay();
@@ -380,4 +384,49 @@ bool State::poolDangerExist()
         }
     }
     return change;
+}
+
+bool State::checkifCorrectlySolved()
+{
+    int seaCount = 0;
+    int tilesCount = 0;
+    for (auto region : regions)
+    {
+        if (region->getType() == Type::ISLAND && region->getCurrentSize() != region->getMaxSize())
+            return false;
+        if (region-> getType() == Type::UNCONNECTED_ISLAND)
+            return false;
+        if (region-> getType() == Type::SEA)
+            seaCount++;
+        tilesCount += region -> getCurrentSize();
+    }
+    if (seaCount != 1 || tilesCount != (grid.size() - 2) * (grid[0].size() - 2))
+        return false;
+
+    for (auto potentialPool : potentialPools)
+        if (potentialPool.checkIfPool())
+            return false;
+
+    return true;
+}
+
+bool State::checkifErrors()
+{
+    for (auto region : regions)
+    {
+        if (region->getType() == Type::ISLAND && region->getCurrentSize() > region->getMaxSize())
+            return true;
+        else if (region->getType() == Type::ISLAND && region->getCurrentSize() < region->getMaxSize() && region->getAdjacentTiles(grid).size() == 0)
+            return true;
+        else if (region-> getType() == Type::UNCONNECTED_ISLAND && region -> getAdjacentTiles(grid).size() == 0)
+            return true;
+        else if (region-> getType() == Type::SEA && region -> getAdjacentTiles(grid).size() == 0)
+            return true;
+    }
+
+    for (auto potentialPool : potentialPools)
+        if (potentialPool.checkIfPool())
+            return true;
+
+    return false;
 }

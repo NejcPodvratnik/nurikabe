@@ -65,6 +65,61 @@ void NurikabeSolver::init()
     states.push(State(grid, regions, potentialPools));
 }
 
+bool NurikabeSolver::isDuplicate(std::vector<Tile*> guessTiles, int _y, int _x)
+{
+    for (auto guessTile : guessTiles)
+        if (guessTile->getX() == _x && guessTile->getY() == _y)
+            return true;
+    return false;
+}
+
+void NurikabeSolver::solve()
+{
+    if (states.size() == 0)
+    {
+        std::cout << "Initialize board first." << std::endl;
+        return;
+    }
+
+    do
+    {
+        State state = states.front();
+        states.pop();
+
+        state.solve();
+        state.print();
+
+        // GUESSING PHASE
+        std::vector<Tile*> guessTiles;
+        for (auto region : state.getRegions())
+            for (auto adjacentTile : region -> getAdjacentTiles(state.getGrid()))
+                if (!isDuplicate(guessTiles, adjacentTile -> getY(), adjacentTile -> getX()))
+                    guessTiles.push_back(adjacentTile);
+        
+        std::cout << "Naredili bomo nove boarde s temi koordinatami:" << std::endl;
+
+        for (int i = 0; i < 3; i++)
+        {
+            std::cout << "(" << guessTiles[i] -> getY() << "," << guessTiles[i] -> getX() << ") ";
+
+            State newState1 = state;
+            State newState2 = state;
+
+            newState2.setTileAsSea(guessTiles[i]);
+            newState1.setTileAsUnconnectedIsland(guessTiles[i]);
+
+            states.push(newState1);
+            states.push(newState2);
+        }
+    } while (false);
+
+    while (!states.empty())
+    {
+        State state = states.front();
+        states.pop();
+        state.print();
+    }
+}
 
 State NurikabeSolver::getState()
 {
